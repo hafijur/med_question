@@ -191,8 +191,10 @@ export default {
 
             axios.post('/product', product).then(response => {
                 console.log(response.data);
+                alert("Successfully added");
             }).catch(error => {
                 console.log(error);
+                alert("Something went wrong");
             })
 
             console.log(product);
