@@ -45,9 +45,29 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        DB::transaction(function () use($request) {
+
+        DB::transaction(function () use ($request) {
             // insert Product
             $product = Product::create($request->all());
+
+            // Inserting Product image
+            $folderPath = "uploads/";
+            foreach ($request->product_image as $img) {
+                $base64Image = explode(";base64,", $img['dataURL']);
+                $explodeImage = explode("image/", $base64Image[0]);
+                $imageType = $explodeImage[1];
+                $image_base64 = base64_decode($base64Image[1]);
+                $file = $folderPath . uniqid() . '.' . $imageType;
+                try {
+                    file_put_contents($file, $image_base64);
+                    $image = new ProductImage();
+                    $image->file_path = $file;
+                    $image->product_id = $product->id;
+                    $image->save();
+                } catch (\Throwable $th) {
+                    error_log("something went wrong during image upload $th");
+                }
+            }
 
             // Now inserting product variants
             foreach ($request->product_variant as $variant) {
@@ -63,9 +83,9 @@ class ProductController extends Controller
 
             // Now inserting Product Variant Price
             foreach ($request->product_variant_prices as $pvp) {
-                $variants = explode('/', $pvp['title']);                
-                $variants = (count($variants) > 2 ? array_slice($variants,0,3) : $variants);
-                $product_variants = ProductVariant::whereIn('variant', $variants  )->get();
+                $variants = explode('/', $pvp['title']);
+                $variants = (count($variants) > 2 ? array_slice($variants, 0, 3) : $variants);
+                $product_variants = ProductVariant::whereIn('variant', $variants)->get();
                 $product_variant_price = new ProductVariantPrice();
                 $product_variant_price->product_variant_one = count($variants) > 0 ?  $product_variants[0]['id'] : null;
                 $product_variant_price->product_variant_two = count($variants) > 1 ?  $product_variants[1]['id'] : null;
@@ -102,7 +122,8 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         $variants = Variant::all();
-        return view('products.edit', compact('variants'));
+        $product = Product::with('product_variant', 'producs_variant_price.variant_1', 'producs_variant_price.variant_2', 'producs_variant_price.variant_3')->where('id', $product->id)->first();
+        return view('products.edit', compact('variants', 'product'));
     }
 
     /**

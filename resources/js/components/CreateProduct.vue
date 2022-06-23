@@ -24,7 +24,8 @@
                         <h6 class="m-0 font-weight-bold text-primary">Media</h6>
                     </div>
                     <div class="card-body border">
-                        <vue-dropzone ref="myVueDropzone" id="dropzone" :options="dropzoneOptions"></vue-dropzone>
+                        <vue-dropzone v-on:vdropzone-success="imageAdding" ref="myVueDropzone" id="dropzone"
+                            :options="dropzoneOptions"></vue-dropzone>
                     </div>
                 </div>
             </div>
@@ -33,32 +34,35 @@
                 <div class="card shadow mb-4">
                     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                         <h6 class="m-0 font-weight-bold text-primary">Variants</h6>
+
                     </div>
                     <div class="card-body">
-                        <div class="row" v-for="(item,index) in product_variant">
+                        <div class="row" v-for="(item, index) in product_variant">
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="">Option</label>
                                     <select v-model="item.option" class="form-control">
-                                        <option v-for="variant in variants"
-                                                :value="variant.id">
+                                        <option v-for="variant in variants" :value="variant.id">
                                             {{ variant.title }}
                                         </option>
                                     </select>
+
                                 </div>
                             </div>
                             <div class="col-md-8">
                                 <div class="form-group">
-                                    <label v-if="product_variant.length != 1" @click="product_variant.splice(index,1); checkVariant"
-                                           class="float-right text-primary"
-                                           style="cursor: pointer;">Remove</label>
+                                    <label v-if="product_variant.length != 1"
+                                        @click="product_variant.splice(index, 1); checkVariant"
+                                        class="float-right text-primary" style="cursor: pointer;">Remove</label>
                                     <label v-else for="">.</label>
-                                    <input-tag v-model="item.tags" @input="checkVariant" class="form-control"></input-tag>
+                                    <input-tag v-model="item.tags" @input="checkVariant" class="form-control">
+                                    </input-tag>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer" v-if="product_variant.length < variants.length && product_variant.length < 3">
+                    <div class="card-footer"
+                        v-if="product_variant.length < variants.length && product_variant.length < 3">
                         <button @click="newVariant" class="btn btn-primary">Add another option</button>
                     </div>
 
@@ -67,22 +71,22 @@
                         <div class="table-responsive">
                             <table class="table">
                                 <thead>
-                                <tr>
-                                    <td>Variant</td>
-                                    <td>Price</td>
-                                    <td>Stock</td>
-                                </tr>
+                                    <tr>
+                                        <td>Variant</td>
+                                        <td>Price</td>
+                                        <td>Stock</td>
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                <tr v-for="variant_price in product_variant_prices">
-                                    <td>{{ variant_price.title }}</td>
-                                    <td>
-                                        <input type="text" class="form-control" v-model="variant_price.price">
-                                    </td>
-                                    <td>
-                                        <input type="text" class="form-control" v-model="variant_price.stock">
-                                    </td>
-                                </tr>
+                                    <tr v-for="variant_price in product_variant_prices">
+                                        <td>{{ variant_price.title }}</td>
+                                        <td>
+                                            <input type="text" class="form-control" v-model="variant_price.price">
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control" v-model="variant_price.stock">
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -110,7 +114,51 @@ export default {
         variants: {
             type: Array,
             required: true
+        },
+        product: {
+            type: Object,
+            default() {
+                return {}
+            }
         }
+    },
+    created() {
+        if (this.product.title != undefined) {
+            // group by product variants
+            let groupByVariant = this.product.product_variant.reduce((a, b) => {
+                if (!a[b.variant_id]) a[b.variant_id] = []; //If this type wasn't previously stored
+                a[b.variant_id].push(b);
+                return a;
+            }, {});
+            let temp_product_variant = [];
+            Object.keys(groupByVariant).map((item, key) => {
+                let tags = [];
+                groupByVariant[item].forEach((val, index) => tags.push(val.variant));
+                console.log("tags", tags);
+                temp_product_variant.push(
+                    {
+                        option: item,
+                        tags: tags
+
+                    }
+                );
+
+            });
+            console.log("Product variant prices", this.product.producs_variant_price);
+            this.product.producs_variant_price.forEach((item, key) => this.product_variant_prices.push(
+                {
+                    title: (item.variant_1?.variant == undefined ? '' : item.variant_1?.variant + '/') + (item.variant_2?.variant === undefined ? '' : item.variant_2?.variant) + (item?.variant_3?.variant === undefined ? '' : '/' + item?.variant_3?.variant),
+                    price: item.price,
+                    stock: item.stock
+                }
+            ));
+
+            this.product_name = this.product.title;
+            this.product_sku = this.product.sku;
+            this.description = this.product.description;
+            this.product_variant = temp_product_variant;
+        }
+
     },
     data() {
         return {
@@ -129,7 +177,7 @@ export default {
                 url: 'https://httpbin.org/post',
                 thumbnailWidth: 150,
                 maxFilesize: 0.5,
-                headers: {"My-Awesome-Header": "header value"}
+                headers: { "My-Awesome-Header": "header value" }
             }
         }
     },
@@ -176,6 +224,10 @@ export default {
             }, []);
             return ans;
         },
+        imageAdding(file, response) {
+            this.images.push(file);
+            console.log("Get Accepted file", file);
+        },
 
         // store product into database
         saveProduct() {
@@ -187,8 +239,6 @@ export default {
                 product_variant: this.product_variant,
                 product_variant_prices: this.product_variant_prices
             }
-
-
             axios.post('/product', product).then(response => {
                 console.log(response.data);
                 alert("Successfully added");
@@ -197,7 +247,6 @@ export default {
                 alert("Something went wrong");
             })
 
-            console.log(product);
         }
 
 

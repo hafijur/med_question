@@ -2012,6 +2012,10 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
 
 
 
@@ -2024,6 +2028,51 @@ __webpack_require__.r(__webpack_exports__);
     variants: {
       type: Array,
       required: true
+    },
+    product: {
+      type: Object,
+      "default": function _default() {
+        return {};
+      }
+    }
+  },
+  created: function created() {
+    var _this = this;
+
+    if (this.product.title != undefined) {
+      // group by product variants
+      var groupByVariant = this.product.product_variant.reduce(function (a, b) {
+        if (!a[b.variant_id]) a[b.variant_id] = []; //If this type wasn't previously stored
+
+        a[b.variant_id].push(b);
+        return a;
+      }, {});
+      var temp_product_variant = [];
+      Object.keys(groupByVariant).map(function (item, key) {
+        var tags = [];
+        groupByVariant[item].forEach(function (val, index) {
+          return tags.push(val.variant);
+        });
+        console.log("tags", tags);
+        temp_product_variant.push({
+          option: item,
+          tags: tags
+        });
+      });
+      console.log("Product variant prices", this.product.producs_variant_price);
+      this.product.producs_variant_price.forEach(function (item, key) {
+        var _item$variant_, _item$variant_2, _item$variant_3, _item$variant_4, _item$variant_5, _item$variant_6;
+
+        return _this.product_variant_prices.push({
+          title: (((_item$variant_ = item.variant_1) === null || _item$variant_ === void 0 ? void 0 : _item$variant_.variant) == undefined ? '' : ((_item$variant_2 = item.variant_1) === null || _item$variant_2 === void 0 ? void 0 : _item$variant_2.variant) + '/') + (((_item$variant_3 = item.variant_2) === null || _item$variant_3 === void 0 ? void 0 : _item$variant_3.variant) === undefined ? '' : (_item$variant_4 = item.variant_2) === null || _item$variant_4 === void 0 ? void 0 : _item$variant_4.variant) + ((item === null || item === void 0 ? void 0 : (_item$variant_5 = item.variant_3) === null || _item$variant_5 === void 0 ? void 0 : _item$variant_5.variant) === undefined ? '' : '/' + (item === null || item === void 0 ? void 0 : (_item$variant_6 = item.variant_3) === null || _item$variant_6 === void 0 ? void 0 : _item$variant_6.variant)),
+          price: item.price,
+          stock: item.stock
+        });
+      });
+      this.product_name = this.product.title;
+      this.product_sku = this.product.sku;
+      this.description = this.product.description;
+      this.product_variant = temp_product_variant;
     }
   },
   data: function data() {
@@ -2069,7 +2118,7 @@ __webpack_require__.r(__webpack_exports__);
     },
     // check the variant and render all the combination
     checkVariant: function checkVariant() {
-      var _this = this;
+      var _this2 = this;
 
       var tags = [];
       this.product_variant_prices = [];
@@ -2077,7 +2126,7 @@ __webpack_require__.r(__webpack_exports__);
         tags.push(item.tags);
       });
       this.getCombn(tags).forEach(function (item) {
-        _this.product_variant_prices.push({
+        _this2.product_variant_prices.push({
           title: item,
           price: 0,
           stock: 0
@@ -2098,6 +2147,10 @@ __webpack_require__.r(__webpack_exports__);
       }, []);
       return ans;
     },
+    imageAdding: function imageAdding(file, response) {
+      this.images.push(file);
+      console.log("Get Accepted file", file);
+    },
     // store product into database
     saveProduct: function saveProduct() {
       var product = {
@@ -2115,7 +2168,6 @@ __webpack_require__.r(__webpack_exports__);
         console.log(error);
         alert("Something went wrong");
       });
-      console.log(product);
     }
   },
   mounted: function mounted() {
@@ -50568,7 +50620,8 @@ var render = function() {
             [
               _c("vue-dropzone", {
                 ref: "myVueDropzone",
-                attrs: { id: "dropzone", options: _vm.dropzoneOptions }
+                attrs: { id: "dropzone", options: _vm.dropzoneOptions },
+                on: { "vdropzone-success": _vm.imageAdding }
               })
             ],
             1
@@ -63302,8 +63355,8 @@ __webpack_require__.r(__webpack_exports__);
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(/*! /var/www/interview-question-sr/resources/js/app.js */"./resources/js/app.js");
-module.exports = __webpack_require__(/*! /var/www/interview-question-sr/resources/sass/app.scss */"./resources/sass/app.scss");
+__webpack_require__(/*! D:\laravel-projects\med_question\resources\js\app.js */"./resources/js/app.js");
+module.exports = __webpack_require__(/*! D:\laravel-projects\med_question\resources\sass\app.scss */"./resources/sass/app.scss");
 
 
 /***/ })
